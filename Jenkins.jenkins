@@ -1,0 +1,48 @@
+#!groovy
+pipeline {
+    agent any
+    triggers { pollSCM('* * * * *') }
+    stages {
+        stage('Clone sources') {
+            steps {
+                bat 'clone.bat'
+           }
+        }
+        stage('Build') {
+            steps {
+                bat 'build.bat'
+           }
+        }
+        stage('Test') {
+            steps {
+                bat 'test.bat'
+           }
+        }
+        stage('Archive') {
+            steps {
+                zip zipFile: 'C:\\Users\\Public\\archive\\' + env.BUILD_NUMBER.toString() + '.zip', dir: 'C:\\Users\\Public\\clone\\UnitTest\\bin\\Debug'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                unzip zipFile: 'C:\\Users\\Public\\archive\\' + env.BUILD_NUMBER.toString() + '.zip', dir: 'C:\\Users\\Public\\deploy\\' + env.BUILD_NUMBER.toString()
+            }
+        } 
+    }
+    post { 
+        failure { 
+            emailext body: "FAILED\nJob: ${env.JOB_NAME}, build: ${env.BUILD_NUMBER}\nCheck console output at ${env.BUILD_URL}",
+            to: "rustam-avatar@mail.ru",
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
+            subject: "FAILED JOB: ${env.JOB_NAME}"
+            
+        } 
+        success { 
+            emailext body: "SUCCESS\nJob: ${env.JOB_NAME}, build: ${env.BUILD_NUMBER}\nCheck console output at ${env.BUILD_URL}",
+            to: "rustam-avatar@mail.ru",
+            recipientProviders: [[$class: 'DevelopersRecipientProvider'], [$class: 'RequesterRecipientProvider']],
+            subject: "SUCCESS JOB: ${env.JOB_NAME}"
+            
+        } 
+    }
+}
