@@ -10,7 +10,7 @@ namespace Git
     {
         public int doWork(int val)
         {
-            return val;
+            return va;
         }
     }
 }
